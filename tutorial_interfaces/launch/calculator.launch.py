@@ -1,8 +1,18 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 
+from ament_index_python.packages import get_package_share_directory
+import os
+
 
 def generate_launch_description():
+
+    config_file = get_package_share_directory('tutorial_interfaces') 
+    config_path = os.path.join(
+        config_file,
+        'config',
+        'calculator_params.yaml'
+    )
 
     server = Node(
         package='tutorial_interfaces',
@@ -16,12 +26,7 @@ def generate_launch_description():
         executable='client',
         name='calculator_client',
         output='screen',
-        parameters=[
-            {"a": 10},
-            {"b": 20},
-            {"c": 30},
-            {"operation": "mul"}
-        ]
+        parameters=[config_path]
     )
 
     return LaunchDescription([

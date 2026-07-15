@@ -17,21 +17,6 @@ int main(int argc, char **argv)
     node->declare_parameter("c", 0);
     node->declare_parameter("operation", "add");
 
-    auto request =
-        std::make_shared<tutorial_interfaces::srv::Cal::Request>();
-
-    request->a =
-        node->get_parameter("a").as_int();
-
-    request->b =
-        node->get_parameter("b").as_int();
-
-    request->c =
-        node->get_parameter("c").as_int();
-
-    request->operation =
-        node->get_parameter("operation").as_string();
-
     auto client =
         node->create_client<tutorial_interfaces::srv::Cal>("calculator");
 
@@ -51,29 +36,56 @@ int main(int argc, char **argv)
             "Waiting for calculator service...");
     }
 
-    auto future = client->async_send_request(request);
 
-    if (rclcpp::spin_until_future_complete(node, future) ==
-        rclcpp::FutureReturnCode::SUCCESS)
+    // Continuous execution until Ctrl+C
+    while (rclcpp::ok())
     {
-        auto response = future.get();
+        auto request =
+            std::make_shared<tutorial_interfaces::srv::Cal::Request>();
 
-        RCLCPP_INFO(
-            node->get_logger(),
-            "Result = %ld",
-            response->result);
+        request->a =
+            node->get_parameter("a").as_int();
 
-        RCLCPP_INFO(
-            node->get_logger(),
-            "Message = %s",
-            response->message.c_str());
+        request->b =
+            node->get_parameter("b").as_int();
+
+        request->c =
+            node->get_parameter("c").as_int();
+
+        request->operation =
+            node->get_parameter("operation").as_string();
+
+
+        auto future = client->async_send_request(request);
+
+
+        if (rclcpp::spin_until_future_complete(node, future) ==
+            rclcpp::FutureReturnCode::SUCCESS)
+        {
+            auto response = future.get();
+
+            RCLCPP_INFO(
+                node->get_logger(),
+                "Result = %ld",
+                response->result);
+
+            RCLCPP_INFO(
+                node->get_logger(),
+                "Message = %s",
+                response->message.c_str());
+        }
+        else
+        {
+            RCLCPP_ERROR(
+                node->get_logger(),
+                "Failed to call calculator service.");
+        }
+
+
+        // Wait before sending next request
+        rclcpp::sleep_for(1s);
     }
-    else
-    {
-        RCLCPP_ERROR(
-            node->get_logger(),
-            "Failed to call calculator service.");
-    }
+
 
     rclcpp::shutdown();
 
